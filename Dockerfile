@@ -13,11 +13,8 @@ FROM eclipse-temurin:8-jdk-alpine
 WORKDIR /app
 
 COPY --from=builder /app/target/*.war app.war
-COPY --from=builder /app/target/webapp-runner.jar webapp-runner.jar
+COPY --from=builder /app/target/dependency/webapp-runner.jar webapp-runner.jar
 
-# Expose new port
 EXPOSE 8076
 
-# Run WAR using webapp-runner on port 8076
 ENTRYPOINT ["java", "-jar", "webapp-runner.jar", "--port", "8076", "app.war"]
-
