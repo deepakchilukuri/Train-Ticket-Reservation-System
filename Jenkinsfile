@@ -2,14 +2,19 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
         IMAGE_NAME = "chilukuri268/train-ticket-reservation-system"
     }
 
     stages {
-        stage('Build Maven Project') {
+        stage('Checkout') {
             steps {
-                sh 'mvn clean package'
+                git url: 'https://github.com/deepakchilukuri/Train-Ticket-Reservation-System.git', branch: 'master'
+            }
+        }
+
+        stage('Build WAR') {
+            steps {
+                sh 'mvn clean package -DskipTests'
             }
         }
 
@@ -25,7 +30,7 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
                         sh "docker push ${IMAGE_NAME}:${BUILD_NUMBER}"
                         sh "docker push ${IMAGE_NAME}:latest"
                     }
@@ -36,9 +41,9 @@ pipeline {
         stage('Deploy Container') {
             steps {
                 script {
-                    // stop old container if exists
+                    // Stop old container if exists
                     sh "docker rm -f train-ticket-app || true"
-                    // run new container on port 8076
+                    // Run new container on port 8076
                     sh "docker run -d -p 8076:8080 --name train-ticket-app ${IMAGE_NAME}:latest"
                 }
             }
