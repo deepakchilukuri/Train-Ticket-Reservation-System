@@ -2,36 +2,44 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "chilukuri268/train-ticket-reservation-system:${BUILD_NUMBER}"
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        IMAGE_NAME = "chilukuri268/train-ticket-reservation-system"
     }
 
     stages {
-        stage('Checkout') {
+        stage('Build Maven Project') {
             steps {
-                git url: 'https://github.com/deepakchilukuri/Train-Ticket-Reservation-System.git', branch: 'master'
-            }
-        }
-
-        stage('Build WAR') {
-            steps {
-                sh 'mvn clean package -DskipTests'
+                sh 'mvn clean package'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
-                sh 'docker tag $DOCKER_IMAGE chilukuri268/train-ticket-reservation-system:latest'
+                script {
+                    sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} ."
+                    sh "docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${IMAGE_NAME}:latest"
+                }
             }
         }
 
         stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
-                        sh 'docker push $DOCKER_IMAGE'
-                        sh 'docker push chilukuri268/train-ticket-reservation-system:latest'
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
+                        sh "docker push ${IMAGE_NAME}:${BUILD_NUMBER}"
+                        sh "docker push ${IMAGE_NAME}:latest"
                     }
+                }
+            }
+        }
+
+        stage('Deploy Container') {
+            steps {
+                script {
+                    // stop old container if exists
+                    sh "docker rm -f train-ticket-app || true"
+                    // run new container on port 8076
+                    sh "docker run -d -p 8076:8080 --name train-ticket-app ${IMAGE_NAME}:latest"
                 }
             }
         }
