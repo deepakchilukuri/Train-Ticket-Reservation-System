@@ -2,17 +2,18 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'chilukuri268/train-ticket-reservation-system'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials') // Add this in Jenkins > Credentials
+        IMAGE_NAME = "chilukuri268/train-ticket-reservation-system"
     }
 
     stages {
-        stage('Checkout') {
+        stage('Clone') {
             steps {
-                git url: 'https://github.com/deepakchilukuri/Train-Ticket-Reservation-System.git', branch: 'master'
+                git 'https://github.com/deepakchilukuri/Train-Ticket-Reservation-System.git'
             }
         }
 
-        stage('Build WAR') {
+        stage('Build Maven') {
             steps {
                 sh 'mvn clean package -DskipTests'
             }
@@ -20,14 +21,18 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
+                script {
+                    dockerImage = docker.build("${IMAGE_NAME}")
+                }
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withDockerRegistry([credentialsId: 'dockerhub-credentials']) {
-                    sh 'docker push $DOCKER_IMAGE'
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
+                        dockerImage.push('latest')
+                    }
                 }
             }
         }
@@ -39,4 +44,3 @@ pipeline {
         }
     }
 }
-
