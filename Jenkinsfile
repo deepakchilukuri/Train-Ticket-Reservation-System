@@ -28,7 +28,7 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
                         sh 'docker push $DOCKER_IMAGE'
                         sh 'docker push chilukuri268/train-ticket-reservation-system:latest'
                     }
