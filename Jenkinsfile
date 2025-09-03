@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "chilukuri268/train-ticket-reservation-system"
+        DOCKER_IMAGE = "chilukuri268/train-ticket-reservation-system:${BUILD_NUMBER}"
     }
 
     stages {
@@ -20,15 +20,18 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE:$BUILD_NUMBER -t $DOCKER_IMAGE:latest .'
+                sh 'docker build -t $DOCKER_IMAGE .'
+                sh 'docker tag $DOCKER_IMAGE chilukuri268/train-ticket-reservation-system:latest'
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withDockerRegistry([credentialsId: 'dockerhub-credentials', url: 'https://index.docker.io/v1/']) {
-                    sh 'docker push $DOCKER_IMAGE:$BUILD_NUMBER'
-                    sh 'docker push $DOCKER_IMAGE:latest'
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
+                        sh 'docker push $DOCKER_IMAGE'
+                        sh 'docker push chilukuri268/train-ticket-reservation-system:latest'
+                    }
                 }
             }
         }
