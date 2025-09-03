@@ -48,6 +48,15 @@ pipeline {
                 }
             }
         }
+
+        stage('Cleanup Old Images') {
+            steps {
+                script {
+                    // Remove dangling images (untagged, <none>)
+                    sh "docker image prune -f"
+                }
+            }
+        }
     }
 
     post {
