@@ -44,7 +44,7 @@ pipeline {
                     // Stop old container if exists
                     sh "docker rm -f train-ticket-app || true"
                     // Run new container on port 8076
-                    sh "docker run -d -p 8076:8080 --name train-ticket-app ${IMAGE_NAME}:latest"
+                    sh "docker run -d -p 8076:8076 --name train-ticket-app ${IMAGE_NAME}:latest"
                 }
             }
         }
